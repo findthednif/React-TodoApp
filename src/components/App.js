@@ -4,8 +4,8 @@ import TaskList from "./TaskList";
 import Footer from "./Footer";
 export default class App extends React.Component {
   maxId = 10;
-  activeFilter = 'all';
   state = {
+    activeFilter: 'all',
     todoData: [],
   };
   setFilter = (filter) => {
