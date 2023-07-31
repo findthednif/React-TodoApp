@@ -11,6 +11,16 @@ export default class App extends React.Component {
   setFilter = (filter) => {
     this.setState({ activeFilter: filter });
   };
+  editItem = (id, text) => {
+    this.setState(({todoData}) => {
+      return ({
+        todoData: todoData.map(todo => {
+          if(todo.id === id) todo.textContent = text;
+          return todo
+        })
+      })
+    })
+  }
   deleteItem = (id) => {
     this.setState(({todoData}) =>{
       const index = todoData.findIndex(el => el.id === id);
@@ -27,7 +37,6 @@ export default class App extends React.Component {
     const newItem = {
       textContent: text,
       completed: false,
-      edited: false,
       id: this.maxId++,
       date: new Date()
     }
@@ -83,6 +92,7 @@ export default class App extends React.Component {
         />
         <TaskList
         todos={filteredTodos}
+        onEdited = {this.editItem}
         onDeleted={this.deleteItem}
         onCompleted={this.completedItem}
         />
