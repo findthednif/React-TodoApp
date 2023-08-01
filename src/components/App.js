@@ -1,107 +1,103 @@
-import React from "react";
-import NewTaskForm from "./NewTaskForm";
-import TaskList from "./TaskList";
-import Footer from "./Footer";
+import React from 'react'
+
+import NewTaskForm from './NewTaskForm'
+import TaskList from './TaskList'
+import Footer from './Footer'
 export default class App extends React.Component {
-  maxId = 10;
-  state = {
-    activeFilter: 'all',
-    todoData: [],
-  };
-  setFilter = (filter) => {
-    this.setState({ activeFilter: filter });
-  };
-  editItem = (id, text) => {
-    this.setState(({todoData}) => {
-      return ({
-        todoData: todoData.map(todo => {
-          if(todo.id === id) todo.textContent = text;
-          return todo
-        })
-      })
-    })
+  constructor(props) {
+    super(props)
+    this.maxId = 10
+    this.state = {
+      activeFilter: 'all',
+      todoData: [],
+    }
   }
-  deleteItem = (id) => {
-    this.setState(({todoData}) =>{
-      const index = todoData.findIndex(el => el.id === id);
-      const newTodoData = [
-        ...todoData.slice(0, index),
-        ...todoData.slice(index + 1)
-      ]
+
+  setFilter(filter) {
+    this.setState({ activeFilter: filter })
+  }
+  editItem(id, text) {
+    this.setState(({ todoData }) => {
       return {
-        todoData: newTodoData
+        todoData: todoData.map((todo) => {
+          if (todo.id === id) todo.textContent = text
+          return todo
+        }),
       }
     })
-}
-  addItem = (text) => {
+  }
+  deleteItem(id) {
+    this.setState(({ todoData }) => {
+      const index = todoData.findIndex((el) => el.id === id)
+      const newTodoData = [...todoData.slice(0, index), ...todoData.slice(index + 1)]
+      return {
+        todoData: newTodoData,
+      }
+    })
+  }
+  addItem(text) {
     const newItem = {
       textContent: text,
       completed: false,
       id: this.maxId++,
-      date: new Date()
+      date: new Date(),
     }
-    this.setState(({todoData}) =>{
+    this.setState(({ todoData }) => {
       return {
-        todoData:[...todoData,newItem] 
+        todoData: [...todoData, newItem],
       }
     })
   }
-  completedItem = (id) => {
-    this.setState(({todoData}) => {
-      const index = todoData.findIndex(el => el.id === id);
-      const newItem = {...todoData[index], 
-                      completed: !todoData[index].completed
-      }
-      const newTodoData = [
-      ...todoData.slice(0, index),
-      newItem,
-      ...todoData.slice(index + 1)
-      ]
+  completedItem(id) {
+    this.setState(({ todoData }) => {
+      const index = todoData.findIndex((el) => el.id === id)
+      const newItem = { ...todoData[index], completed: !todoData[index].completed }
+      const newTodoData = [...todoData.slice(0, index), newItem, ...todoData.slice(index + 1)]
       return {
-        todoData: newTodoData
+        todoData: newTodoData,
       }
     })
   }
-  completedRemove = () => {
-    this.setState(({todoData}) => {
-      const newTodoData = todoData.filter(todo =>{
+  completedRemove() {
+    this.setState(({ todoData }) => {
+      const newTodoData = todoData.filter((todo) => {
         return !todo.completed
       })
-    return {
-      todoData: newTodoData
-    }
+      return {
+        todoData: newTodoData,
+      }
     })
   }
   render() {
-    const {todoData, activeFilter} = this.state;
+    const { todoData, activeFilter } = this.state
     const filteredTodos = todoData.filter((todo) => {
-      if (activeFilter === "active") {
-        return !todo.completed;
-      } else if (activeFilter === "completed") {
-        return todo.completed;
+      if (activeFilter === 'active') {
+        return !todo.completed
+      } else if (activeFilter === 'completed') {
+        return todo.completed
       } else {
-        return true;
+        return true
       }
-    });
+    })
     const doneCount = todoData.filter((todo) => {
-      return !todo.completed}).length
+      return !todo.completed
+    }).length
     return (
       <section className="todoapp">
-        <NewTaskForm 
-        onAdded ={this.addItem}
-        />
+        <NewTaskForm onAdded={this.addItem.bind(this)} />
         <TaskList
-        todos={filteredTodos}
-        onEdited = {this.editItem}
-        onDeleted={this.deleteItem}
-        onCompleted={this.completedItem}
+          todos={filteredTodos}
+          onEdited={this.editItem.bind(this)}
+          onDeleted={this.deleteItem.bind(this)}
+          onCompleted={this.completedItem.bind(this)}
         />
         <Footer
-        doneCount = {doneCount}
-        activeFilter = {activeFilter}
-        setFilter={this.setFilter}
-        completedRemove = {this.completedRemove}/>
+          doneCount={doneCount}
+          activeFilter={activeFilter}
+          setFilter={this.setFilter.bind(this)}
+          completedRemove={this.completedRemove.bind(this)}
+        />
       </section>
-    );
+    )
   }
 }
