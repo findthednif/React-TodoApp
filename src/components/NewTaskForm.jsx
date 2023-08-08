@@ -1,27 +1,28 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from 'react'
+import PropTypes from 'prop-types'
+
 export default class NewTaskForm extends React.Component {
   state = {
-    value: "",
-  };
+    value: '',
+  }
   printValue = (e) => {
     this.setState({
       value: e.target.value,
-    });
-  };
+    })
+  }
   submit = (e) => {
-    e.preventDefault();
-    if (this.state.value.trim() === "") {
+    e.preventDefault()
+    if (this.state.value.trim() === '') {
       this.setState({
-        value: "",
-      });
-      return;
+        value: '',
+      })
+      return
     }
-    this.props.onAdded(this.state.value);
+    this.props.onAdded(this.state.value)
     this.setState({
-      value: "",
-    });
-  };
+      value: '',
+    })
+  }
   render() {
     return (
       <form className="header" onSubmit={this.submit}>
@@ -34,9 +35,9 @@ export default class NewTaskForm extends React.Component {
           onChange={this.printValue}
         />
       </form>
-    );
+    )
   }
   static propTypes = {
     onAdded: PropTypes.func.isRequired,
-  };
+  }
 }
