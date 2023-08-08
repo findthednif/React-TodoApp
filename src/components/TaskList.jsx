@@ -1,29 +1,31 @@
 import React from "react";
-import Task from "./Task.js";
+import Task from "./Task";
 import PropTypes from "prop-types";
 export default class TaskList extends React.Component {
-  render() {
+  elements = () => {
     const { todos, onEdited, onDeleted, onCompleted } = this.props;
-    const elements = todos.map((todo) => {
+    return todos.map((todo) => {
       const { id } = todo;
       return (
         <Task
           key={id}
           todo={todo}
-          onEdited = {(text) => onEdited(id, text)}
+          onEdited={(text) => onEdited(id, text)}
           onDeleted={() => onDeleted(id)}
           onCompleted={() => onCompleted(id)}
         />
       );
     });
-    return <ul className="todo-list">{elements}</ul>;
+  };
+  render() {
+    return <ul className="todo-list">{this.elements()}</ul>;
   }
-  static propTypes ={
+  static propTypes = {
     todos: PropTypes.arrayOf(PropTypes.object).isRequired,
     onDeleted: PropTypes.func.isRequired,
-    onCompleted: PropTypes.func.isRequired
-  }
-  static defaultProps ={
-    todos: []
-  }
+    onCompleted: PropTypes.func.isRequired,
+  };
+  static defaultProps = {
+    todos: [],
+  };
 }

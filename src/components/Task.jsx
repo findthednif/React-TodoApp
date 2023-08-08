@@ -6,44 +6,58 @@ export default class Task extends React.Component {
     value: "",
     editing: false,
   };
-  printingNewTask = (e) =>{
+  printingNewTask = (e) => {
     this.setState({
-      value: e.target.value
-    })
-  }
+      value: e.target.value,
+    });
+  };
   editingTask = () => {
     this.setState({
-      editing: true
+      editing: true,
     });
   };
   submitingTask = (e) => {
-    e.preventDefault()
-    this.props.onEdited(this.state.value)
+    e.preventDefault();
+    if (this.state.value.trim() === "") {
+      this.setState({
+        value: "",
+        editing: false,
+      });
+      return;
+    }
+    this.props.onEdited(this.state.value);
     this.setState({
       value: "",
-      editing: false
-    })
-
+      editing: false,
+    });
   };
-
-  render() {
-    const { todo, onDeleted, onCompleted } = this.props;
-    const { textContent, completed, date } = todo;
+  editTaskForm = () => {
     let editTaskForm = null;
+    const { textContent } = this.props.todo;
     if (this.state.editing) {
       editTaskForm = (
         <form onSubmit={this.submitingTask}>
-          <input type="text" className="new-todo"
-          defaultValue={textContent}
-          onChange={this.printingNewTask}
-          autoFocus></input>
+          <input
+            type="text"
+            className="new-todo"
+            defaultValue={textContent}
+            onChange={this.printingNewTask}
+            autoFocus
+          ></input>
         </form>
       );
     }
-    let taskCreateTime = formatDistanceToNow(date, {
+    return editTaskForm;
+  };
+  taskCreateTime = () => {
+    const { date } = this.props.todo;
+    return formatDistanceToNow(date, {
       includeSeconds: true,
       addSuffix: true,
     });
+  };
+  className = () => {
+    const { completed } = this.props.todo;
     let className = "task";
     if (completed) {
       className += " completed";
@@ -51,8 +65,13 @@ export default class Task extends React.Component {
     if (this.state.editing) {
       className += " editing";
     }
+    return className;
+  };
+  render() {
+    const { todo, onDeleted, onCompleted } = this.props;
+    const { textContent, completed } = todo;
     return (
-      <li className={className}>
+      <li className={this.className()}>
         <div className="view">
           <input
             className="toggle"
@@ -62,7 +81,7 @@ export default class Task extends React.Component {
           />
           <label>
             <span className="description">{textContent}</span>
-            <span className="created">{`created ${taskCreateTime}`}</span>
+            <span className="created">{`created ${this.taskCreateTime()}`}</span>
           </label>
           <button
             className="icon icon-edit"
@@ -70,7 +89,7 @@ export default class Task extends React.Component {
           ></button>
           <button className="icon icon-destroy" onClick={onDeleted}></button>
         </div>
-        {editTaskForm}
+        {this.editTaskForm()}
       </li>
     );
   }
