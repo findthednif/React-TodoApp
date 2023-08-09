@@ -8,9 +8,18 @@ export default class Task extends React.Component {
     editing: false,
   }
   printingNewTask = (e) => {
-    this.setState({
-      value: e.target.value,
-    })
+    if (e.key === 'Escape') {
+      console.log('Esc!')
+      this.setState({
+        value: '',
+        editing: false,
+      })
+    } else {
+      console.log(e.key)
+      this.setState({
+        value: e.target.value,
+      })
+    }
   }
   editingTask = () => {
     this.setState({
@@ -42,7 +51,7 @@ export default class Task extends React.Component {
             type="text"
             className="new-todo"
             defaultValue={textContent}
-            onChange={this.printingNewTask}
+            onKeyDown={this.printingNewTask}
             autoFocus
           ></input>
         </form>
