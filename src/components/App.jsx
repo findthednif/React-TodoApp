@@ -48,12 +48,14 @@ export default class App extends React.Component {
       }
     })
   }
-  addItem = (text) => {
+  addItem = (text, min, sec) => {
     const newItem = {
       textContent: text,
       completed: false,
       id: this.maxId++,
       date: new Date(),
+      timerMin: min,
+      timerSec: sec,
     }
     this.setState(({ todoData }) => {
       return {

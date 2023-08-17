@@ -6,6 +6,39 @@ export default class Task extends React.Component {
   state = {
     value: '',
     editing: false,
+    minutes: this.props.todo.timerMin,
+    seconds: this.props.todo.timerSec,
+    timerRunning: false,
+  }
+  startTimer = () => {
+    this.setState({ timerRunning: true })
+    this.timerInterval = setInterval(this.timerTick, 1000)
+  }
+  stopTimer = () => {
+    this.setState({
+      timerRunning: false,
+    })
+    clearInterval(this.timerInterval)
+  }
+  timerTick = () => {
+    this.setState((prevState) => {
+      const { minutes, seconds } = prevState
+      if (Number(minutes) === 0 && Number(seconds) === 0) {
+        clearInterval(this.timerInterval)
+        return {
+          timerRunning: false,
+        }
+      }
+      if (Number(seconds) === 0) {
+        return {
+          minutes: minutes - 1,
+          seconds: 59,
+        }
+      }
+      return {
+        seconds: seconds - 1,
+      }
+    })
   }
   printingNewTask = (e) => {
     if (e.key === 'Escape') {
@@ -15,7 +48,6 @@ export default class Task extends React.Component {
         editing: false,
       })
     } else {
-      console.log(e.key)
       this.setState({
         value: e.target.value,
       })
@@ -80,13 +112,29 @@ export default class Task extends React.Component {
   render() {
     const { todo, onDeleted, onCompleted } = this.props
     const { textContent, completed } = todo
+    const { minutes, seconds } = this.state
     return (
       <li className={this.className()}>
         <div className="view">
-          <input className="toggle" type="checkbox" defaultChecked={completed} onClick={onCompleted} />
+          <input
+            className="toggle"
+            type="checkbox"
+            defaultChecked={completed}
+            onClick={() => {
+              onCompleted()
+              this.stopTimer()
+            }}
+          />
           <label>
-            <span className="description">{textContent}</span>
-            <span className="created">{`created ${this.taskCreateTime()}`}</span>
+            <span className="title">{textContent}</span>
+            <span className="description">
+              <button className="icon icon-play" onClick={this.startTimer}></button>
+              <button className="icon icon-pause" onClick={this.stopTimer}></button>
+              <span>
+                {minutes}:{seconds}
+              </span>
+            </span>
+            <span className="description">{`created ${this.taskCreateTime()}`}</span>
           </label>
           <button className="icon icon-edit" onClick={this.editingTask}></button>
           <button className="icon icon-destroy" onClick={onDeleted}></button>

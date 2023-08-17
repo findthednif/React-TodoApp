@@ -4,37 +4,63 @@ import PropTypes from 'prop-types'
 export default class NewTaskForm extends React.Component {
   state = {
     value: '',
+    minutes: '',
+    seconds: '',
   }
   printValue = (e) => {
     this.setState({
       value: e.target.value,
     })
   }
+  printMinutes = (e) => {
+    this.setState({
+      minutes: e.target.value,
+    })
+  }
+  printSeconds = (e) => {
+    this.setState({
+      seconds: e.target.value,
+    })
+  }
   submit = (e) => {
     e.preventDefault()
-    if (this.state.value.trim() === '') {
+    const { value, minutes, seconds } = this.state
+    if (value.trim() === '') {
       this.setState({
         value: '',
       })
       return
     }
-    this.props.onAdded(this.state.value)
+    const numMinutes = parseInt(minutes, 10)
+    const numSeconds = parseInt(seconds, 10)
+    if (isNaN(numMinutes) || isNaN(numSeconds) || numMinutes < 0 || numSeconds < 0 || numSeconds > 59) {
+      return
+    }
+    this.props.onAdded(value, minutes, seconds)
     this.setState({
       value: '',
+      minutes: '',
+      seconds: '',
     })
   }
   render() {
+    const { value, minutes, seconds } = this.state
     return (
-      <form className="header" onSubmit={this.submit}>
+      <header className="header">
         <h1>todos</h1>
-        <input
-          className="new-todo"
-          placeholder="What needs to be done?"
-          autoFocus
-          value={this.state.value}
-          onChange={this.printValue}
-        />
-      </form>
+        <form
+          className="new-todo-form"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              this.submit(e)
+            }
+          }}
+        >
+          <input className="new-todo" placeholder="Task" autoFocus value={value} onChange={this.printValue} />
+          <input className="new-todo-form__timer" placeholder="Min" value={minutes} onChange={this.printMinutes} />
+          <input className="new-todo-form__timer" placeholder="Sec" value={seconds} onChange={this.printSeconds} />
+        </form>
+      </header>
     )
   }
   static propTypes = {
