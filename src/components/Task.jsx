@@ -10,6 +10,9 @@ export default class Task extends React.Component {
     seconds: this.props.todo.timerSec,
     timerRunning: false,
   }
+  componentWillUnmount() {
+    clearInterval(this.timerInterval)
+  }
   startTimer = () => {
     this.setState({ timerRunning: true })
     this.timerInterval = setInterval(this.timerTick, 1000)
