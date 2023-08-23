@@ -10,8 +10,35 @@ export default class Task extends React.Component {
     seconds: this.props.todo.timerSec,
     timerRunning: false,
   }
+  componentDidMount() {
+    const { id } = this.props
+    const timerState = sessionStorage.getItem(`timerState${id}`)
+    if (timerState) {
+      clearInterval(this.timerInterval)
+      const { minutes, seconds } = JSON.parse(timerState)
+      this.setState({ minutes, seconds })
+      sessionStorage.removeItem(`timerState${id}`)
+      this.startTimer()
+    }
+  }
   componentWillUnmount() {
+    const { minutes, seconds, timerRunning } = this.state
+    if (timerRunning) {
+      const { id } = this.props
+      sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+      this.stopTimer()
+      this.timerInterval = setInterval(this.unmountedTimerTick, 1000)
+    }
+  }
+  onDeleted = () => {
+    const { onDeleted } = this.props
     clearInterval(this.timerInterval)
+    this.setState(
+      {
+        timerRunning: false,
+      },
+      onDeleted
+    )
   }
   startTimer = () => {
     this.setState({ timerRunning: true })
@@ -42,6 +69,24 @@ export default class Task extends React.Component {
         seconds: seconds - 1,
       }
     })
+  }
+  unmountedTimerTick = () => {
+    const { id } = this.props
+    let timerState = sessionStorage.getItem(`timerState${id}`)
+    if (timerState) {
+      let { minutes, seconds } = JSON.parse(timerState)
+      if (Number(minutes) === 0 && Number(seconds) === 0) {
+        clearInterval(this.timerInterval)
+        sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+        return
+      }
+      if (Number(seconds) === 0) {
+        minutes -= 1
+        seconds = 60
+      }
+      seconds -= 1
+      sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+    }
   }
   printingNewTask = (e) => {
     if (e.key === 'Escape') {
@@ -113,7 +158,7 @@ export default class Task extends React.Component {
     return className
   }
   render() {
-    const { todo, onDeleted, onCompleted } = this.props
+    const { todo, onCompleted } = this.props
     const { textContent, completed } = todo
     const { minutes, seconds } = this.state
     return (
@@ -140,7 +185,7 @@ export default class Task extends React.Component {
             <span className="description">{`created ${this.taskCreateTime()}`}</span>
           </label>
           <button className="icon icon-edit" onClick={this.editingTask}></button>
-          <button className="icon icon-destroy" onClick={onDeleted}></button>
+          <button className="icon icon-destroy" onClick={this.onDeleted}></button>
         </div>
         {this.editTaskForm()}
       </li>
