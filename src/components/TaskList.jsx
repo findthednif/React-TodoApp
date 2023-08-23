@@ -10,6 +10,7 @@ export default class TaskList extends React.Component {
       return (
         <Task
           key={id}
+          id={id}
           todo={todo}
           onEdited={(text) => onEdited(id, text)}
           onDeleted={() => onDeleted(id)}

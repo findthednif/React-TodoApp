@@ -9,6 +9,9 @@ export default class App extends React.Component {
     activeFilter: 'all',
     todoData: [],
   }
+  componentDidMount(){
+    sessionStorage.clear()
+  }
   setFilter = (filter) => {
     this.setState({ activeFilter: filter })
   }
@@ -47,6 +50,7 @@ export default class App extends React.Component {
         todoData: newTodoData,
       }
     })
+    sessionStorage.removeItem(`timerState${id}`)
   }
   addItem = (text, min, sec) => {
     const newItem = {
