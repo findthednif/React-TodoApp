@@ -9,7 +9,7 @@ export default class App extends React.Component {
     activeFilter: 'all',
     todoData: [],
   }
-  componentDidMount(){
+  componentDidMount() {
     sessionStorage.clear()
   }
   setFilter = (filter) => {
