@@ -1,83 +1,52 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import PropTypes from 'prop-types'
 
-export default class Task extends React.Component {
-  state = {
-    value: '',
-    editing: false,
-    minutes: this.props.todo.timerMin,
-    seconds: this.props.todo.timerSec,
-    timerRunning: false,
-  }
-  componentDidMount() {
-    const { id } = this.props
+export default function Task({ todo, id, onCompleted, onDeleted, onEdited }) {
+  const [timerInterval, setTimerInterval] = useState(null)
+  const [value, setValue] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [minutes, setMinutes] = useState(todo.timerMin)
+  const [seconds, setSeconds] = useState(todo.timerSec)
+  useEffect(() => {
     const timerState = sessionStorage.getItem(`timerState${id}`)
     if (timerState) {
-      clearInterval(this.timerInterval)
+      clearInterval(timerInterval)
       const { minutes, seconds } = JSON.parse(timerState)
-      this.setState({ minutes, seconds })
+      setMinutes(minutes)
+      setSeconds(seconds)
       sessionStorage.removeItem(`timerState${id}`)
-      this.startTimer()
+      startTimer()
     }
-  }
-  componentWillUnmount() {
-    const { minutes, seconds, timerRunning } = this.state
-    if (timerRunning) {
-      const { id } = this.props
+    return () => {
       sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
-      this.stopTimer()
-      this.timerInterval = setInterval(this.unmountedTimerTick, 1000)
+      stopTimer()
+      setTimerInterval(setInterval(unmountedTimerTick, 1000))
+    }
+  }, [])
+  const timerTick = () => {
+    if (minutes <= 0 && seconds <= 0) {
+      clearInterval(timerInterval)
+    }
+    if (seconds > 0) {
+      setSeconds((seconds) => seconds - 1)
+    }
+    if (seconds <= 0 && minutes > 0) {
+      setSeconds(() => {
+        return 59
+      })
+      setMinutes((minutes) => minutes - 1)
     }
   }
-  onDeleted = () => {
-    const { onDeleted } = this.props
-    clearInterval(this.timerInterval)
-    this.setState(
-      {
-        timerRunning: false,
-      },
-      onDeleted
-    )
+  const deleteTask = () => {
+    clearInterval(timerInterval)
+    onDeleted()
   }
-  startTimer = () => {
-    this.setState({ timerRunning: true })
-    this.timerInterval = setInterval(this.timerTick, 1000)
-  }
-  stopTimer = () => {
-    this.setState({
-      timerRunning: false,
-    })
-    console.log('Stop timer')
-    clearInterval(this.timerInterval)
-  }
-  timerTick = () => {
-    this.setState((prevState) => {
-      const { minutes, seconds } = prevState
-      if (Number(minutes) === 0 && Number(seconds) === 0) {
-        clearInterval(this.timerInterval)
-        return {
-          timerRunning: false,
-        }
-      }
-      if (Number(seconds) === 0) {
-        return {
-          minutes: minutes - 1,
-          seconds: 59,
-        }
-      }
-      return {
-        seconds: seconds - 1,
-      }
-    })
-  }
-  unmountedTimerTick = () => {
-    const { id } = this.props
+  const unmountedTimerTick = () => {
     let timerState = sessionStorage.getItem(`timerState${id}`)
     if (timerState) {
       let { minutes, seconds } = JSON.parse(timerState)
       if (Number(minutes) === 0 && Number(seconds) === 0) {
-        clearInterval(this.timerInterval)
+        clearInterval(timerInterval)
         sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
         return
       }
@@ -89,50 +58,39 @@ export default class Task extends React.Component {
       sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
     }
   }
-  printingNewTask = (e) => {
+  const printingNewTask = (e) => {
     if (e.key === 'Escape') {
-      console.log('Esc!')
-      this.setState({
-        value: '',
-        editing: false,
-      })
+      setValue('')
+      setEditing(false)
     } else {
-      this.setState({
-        value: e.target.value,
-      })
+      setValue(e.target.value)
     }
   }
-  editingTask = () => {
-    this.setState({
-      editing: true,
-    })
+  const editingTask = () => {
+    setEditing(true)
   }
-  submitingTask = (e) => {
+  const submitingTask = (e) => {
     e.preventDefault()
-    if (this.state.value.trim() === '') {
-      this.setState({
-        value: '',
-        editing: false,
-      })
+    if (value.trim() === '') {
+      setValue('')
+      setEditing(false)
       return
     }
-    this.props.onEdited(this.state.value)
-    this.setState({
-      value: '',
-      editing: false,
-    })
+    onEdited(value)
+    setValue('')
+    setEditing(false)
   }
-  editTaskForm = () => {
+  const editTaskForm = () => {
     let editTaskForm = null
-    const { textContent } = this.props.todo
-    if (this.state.editing) {
+    const { textContent } = todo
+    if (editing) {
       editTaskForm = (
-        <form onSubmit={this.submitingTask}>
+        <form onSubmit={submitingTask}>
           <input
             type="text"
             className="new-todo"
             defaultValue={textContent}
-            onKeyDown={this.printingNewTask}
+            onKeyDown={printingNewTask}
             autoFocus
           ></input>
         </form>
@@ -140,65 +98,256 @@ export default class Task extends React.Component {
     }
     return editTaskForm
   }
-  taskCreateTime = () => {
-    const { date } = this.props.todo
+  const taskCreateTime = () => {
+    const { date } = todo
     return formatDistanceToNow(date, {
       includeSeconds: true,
       addSuffix: true,
     })
   }
-  className = () => {
-    const { completed } = this.props.todo
+  const className = () => {
+    const { completed } = todo
     let className = 'task'
     if (completed) {
       className += ' completed'
     }
-    if (this.state.editing) {
+    if (editing) {
       className += ' editing'
     }
     return className
   }
-  render() {
-    const { todo, onCompleted } = this.props
-    const { textContent, completed } = todo
-    const { minutes, seconds } = this.state
-    return (
-      <li className={this.className()}>
-        <div className="view">
-          <input
-            className="toggle"
-            type="checkbox"
-            defaultChecked={completed}
-            onClick={() => {
-              onCompleted()
-              this.stopTimer()
-            }}
-          />
-          <label>
-            <span className="title">{textContent}</span>
-            <span className="description">
-              <button className="icon icon-play" onClick={this.startTimer}></button>
-              <button className="icon icon-pause" onClick={this.stopTimer}></button>
-              <span>
-                {minutes}:{seconds}
-              </span>
+  const startTimer = () => {
+    setTimerInterval(setInterval(timerTick, 1000))
+  }
+  const stopTimer = () => {
+    clearInterval(timerInterval)
+  }
+  return (
+    <li className={className()}>
+      <div className="view">
+        <input
+          className="toggle"
+          type="checkbox"
+          defaultChecked={todo.completed}
+          onClick={() => {
+            onCompleted()
+            stopTimer()
+          }}
+        />
+        <label>
+          <span className="title">{todo.textContent}</span>
+          <span className="description">
+            <button className="icon icon-play" onClick={startTimer}></button>
+            <button className="icon icon-pause" onClick={stopTimer}></button>
+            <span>
+              {minutes}:{seconds}
             </span>
-            <span className="description">{`created ${this.taskCreateTime()}`}</span>
-          </label>
-          <button className="icon icon-edit" onClick={this.editingTask}></button>
-          <button className="icon icon-destroy" onClick={this.onDeleted}></button>
-        </div>
-        {this.editTaskForm()}
-      </li>
-    )
-  }
-  static propTypes = {
-    todo: PropTypes.object.isRequired,
-    onDeleted: PropTypes.func,
-    onCompleted: PropTypes.func,
-  }
-  static defaultProps = {
-    onCompleted: () => {},
-    onDeleted: () => {},
-  }
+          </span>
+          <span className="description">{`created ${taskCreateTime()}`}</span>
+        </label>
+        <button className="icon icon-edit" onClick={editingTask}></button>
+        <button className="icon icon-destroy" onClick={deleteTask}></button>
+      </div>
+      {editTaskForm()}
+    </li>
+  )
 }
+// class Task extends React.Component {
+//   state = {
+//     value: '',
+//     editing: false,
+//     minutes: props.todo.timerMin,
+//     seconds: props.todo.timerSec,
+//     timerRunning: false,
+//   }
+//   componentDidMount() {
+//     const { id } = props
+//     const timerState = sessionStorage.getItem(`timerState${id}`)
+//     if (timerState) {
+//       clearInterval(timerInterval)
+//       const { minutes, seconds } = JSON.parse(timerState)
+//       setState({ minutes, seconds })
+//       sessionStorage.removeItem(`timerState${id}`)
+//       startTimer()
+//     }
+//   }
+//   componentWillUnmount() {
+//     const { minutes, seconds, timerRunning } = state
+//     if (timerRunning) {
+//       const { id } = props
+//       sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+//       stopTimer()
+//       timerInterval = setInterval(unmountedTimerTick, 1000)
+//     }
+//   }
+//   onDeleted = () => {
+//     const { onDeleted } = props
+//     clearInterval(timerInterval)
+//     setState(
+//       {
+//         timerRunning: false,
+//       },
+//       onDeleted
+//     )
+//   }
+//   startTimer = () => {
+//     setState({ timerRunning: true })
+//     timerInterval = setInterval(timerTick, 1000)
+//   }
+//   stopTimer = () => {
+//     setState({
+//       timerRunning: false,
+//     })
+//     console.log('Stop timer')
+//     clearInterval(timerInterval)
+//   }
+//   timerTick = () => {
+//     setState((prevState) => {
+//       const { minutes, seconds } = prevState
+//       if (Number(minutes) === 0 && Number(seconds) === 0) {
+//         clearInterval(timerInterval)
+//         return {
+//           timerRunning: false,
+//         }
+//       }
+//       if (Number(seconds) === 0) {
+//         return {
+//           minutes: minutes - 1,
+//           seconds: 59,
+//         }
+//       }
+//       return {
+//         seconds: seconds - 1,
+//       }
+//     })
+//   }
+//   unmountedTimerTick = () => {
+//     const { id } = props
+//     let timerState = sessionStorage.getItem(`timerState${id}`)
+//     if (timerState) {
+//       let { minutes, seconds } = JSON.parse(timerState)
+//       if (Number(minutes) === 0 && Number(seconds) === 0) {
+//         clearInterval(timerInterval)
+//         sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+//         return
+//       }
+//       if (Number(seconds) === 0) {
+//         minutes -= 1
+//         seconds = 60
+//       }
+//       seconds -= 1
+//       sessionStorage.setItem(`timerState${id}`, JSON.stringify({ minutes, seconds }))
+//     }
+//   }
+//   printingNewTask = (e) => {
+//     if (e.key === 'Escape') {
+//       setState({
+//         value: '',
+//         editing: false,
+//       })
+//     } else {
+//       setState({
+//         value: e.target.value,
+//       })
+//     }
+//   }
+//   editingTask = () => {
+//     setState({
+//       editing: true,
+//     })
+//   }
+//   submitingTask = (e) => {
+//     e.preventDefault()
+//     if (state.value.trim() === '') {
+//       setState({
+//         value: '',
+//         editing: false,
+//       })
+//       return
+//     }
+//     props.onEdited(state.value)
+//     setState({
+//       value: '',
+//       editing: false,
+//     })
+//   }
+//   editTaskForm = () => {
+//     let editTaskForm = null
+//     const { textContent } = props.todo
+//     if (state.editing) {
+//       editTaskForm = (
+//         <form onSubmit={submitingTask}>
+//           <input
+//             type="text"
+//             className="new-todo"
+//             defaultValue={textContent}
+//             onKeyDown={printingNewTask}
+//             autoFocus
+//           ></input>
+//         </form>
+//       )
+//     }
+//     return editTaskForm
+//   }
+//   taskCreateTime = () => {
+//     const { date } = props.todo
+//     return formatDistanceToNow(date, {
+//       includeSeconds: true,
+//       addSuffix: true,
+//     })
+//   }
+//   className = () => {
+//     const { completed } = props.todo
+//     let className = 'task'
+//     if (completed) {
+//       className += ' completed'
+//     }
+//     if (state.editing) {
+//       className += ' editing'
+//     }
+//     return className
+//   }
+//   render() {
+//     const { todo, onCompleted } = props
+//     const { textContent, completed } = todo
+//     const { minutes, seconds } = state
+//     return (
+//       <li className={className()}>
+//         <div className="view">
+//           <input
+//             className="toggle"
+//             type="checkbox"
+//             defaultChecked={completed}
+//             onClick={() => {
+//               onCompleted()
+//               stopTimer()
+//             }}
+//           />
+//           <label>
+//             <span className="title">{textContent}</span>
+//             <span className="description">
+//               <button className="icon icon-play" onClick={startTimer}></button>
+//               <button className="icon icon-pause" onClick={stopTimer}></button>
+//               <span>
+//                 {minutes}:{seconds}
+//               </span>
+//             </span>
+//             <span className="description">{`created ${taskCreateTime()}`}</span>
+//           </label>
+//           <button className="icon icon-edit" onClick={editingTask}></button>
+//           <button className="icon icon-destroy" onClick={onDeleted}></button>
+//         </div>
+//         {editTaskForm()}
+//       </li>
+//     )
+//   }
+//   static propTypes = {
+//     todo: PropTypes.object.isRequired,
+//     onDeleted: PropTypes.func,
+//     onCompleted: PropTypes.func,
+//   }
+//   static defaultProps = {
+//     onCompleted: () => {},
+//     onDeleted: () => {},
+//   }
+// }
