@@ -1,8 +1,7 @@
 import React from 'react'
 
-export default class TasksFilter extends React.Component {
-  filterButtons = () => {
-    const { activeFilter, setFilter, filters } = this.props
+export default function TasksFilter({ activeFilter, setFilter, filters }) {
+  const filterButtons = () => {
     return filters.map((filter) => {
       return (
         <li key={filter.value}>
@@ -13,7 +12,5 @@ export default class TasksFilter extends React.Component {
       )
     })
   }
-  render() {
-    return <ul className="filters">{this.filterButtons()}</ul>
-  }
+  return <ul className="filters">{filterButtons()}</ul>
 }
